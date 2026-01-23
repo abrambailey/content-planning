@@ -20,13 +20,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import type { ContentIdea, ContentIdeaInput, StrategyFilterOptions } from "../types";
+
+interface CampaignOption {
+  id: number;
+  name: string;
+  color: string;
+}
 
 interface IdeaFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   idea: ContentIdea | null;
   filterOptions: StrategyFilterOptions;
+  localCampaigns: CampaignOption[];
+  onCreateCampaign: (name: string) => Promise<string | null>;
   onSubmit: (input: ContentIdeaInput) => Promise<void>;
 }
 
@@ -35,6 +44,8 @@ export function IdeaFormDialog({
   onOpenChange,
   idea,
   filterOptions,
+  localCampaigns,
+  onCreateCampaign,
   onSubmit,
 }: IdeaFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,7 +131,8 @@ export function IdeaFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="-mx-6 max-h-[60vh] overflow-y-auto px-6">
+            <div className="grid gap-4 py-4">
             {/* Title */}
             <div className="grid gap-2">
               <Label htmlFor="title">Title *</Label>
@@ -181,30 +193,25 @@ export function IdeaFormDialog({
 
               <div className="grid gap-2">
                 <Label htmlFor="campaign">Campaign</Label>
-                <Select
-                  value={formData.campaign_id?.toString() || "none"}
+                <Combobox
+                  options={localCampaigns.map((campaign) => ({
+                    value: campaign.id.toString(),
+                    label: campaign.name,
+                    color: campaign.color,
+                  }))}
+                  value={formData.campaign_id?.toString() || null}
                   onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      campaign_id: value === "none" ? null : Number(value),
+                      campaign_id: value ? Number(value) : null,
                     })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select campaign" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {filterOptions.campaigns.map((campaign) => (
-                      <SelectItem
-                        key={campaign.id}
-                        value={campaign.id.toString()}
-                      >
-                        {campaign.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onCreate={onCreateCampaign}
+                  placeholder="Select campaign"
+                  searchPlaceholder="Search or create..."
+                  emptyText="No campaigns found."
+                  createText="Create campaign"
+                />
               </div>
             </div>
 
@@ -329,16 +336,10 @@ export function IdeaFormDialog({
                 placeholder="e.g., team, seo, customer feedback"
               />
             </div>
+            </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
+          <DialogFooter className="-mx-6 -mb-6 rounded-b-lg border-t bg-muted/50 p-4">
             <Button type="submit" disabled={isSubmitting || !formData.title}>
               {isSubmitting ? "Saving..." : idea ? "Save changes" : "Submit"}
             </Button>

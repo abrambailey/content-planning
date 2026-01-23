@@ -20,6 +20,7 @@ import {
   createCampaign,
   updateCampaign,
   deleteCampaign,
+  quickCreateCampaign,
   getIdeas,
   createIdea,
   updateIdea,
@@ -59,8 +60,35 @@ export default function StrategyPage() {
     contentTypes: [],
     campaigns: [],
   });
+  const [localCampaigns, setLocalCampaigns] = useState<
+    Array<{ id: number; name: string; color: string }>
+  >([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Sync localCampaigns with filterOptions
+  useEffect(() => {
+    setLocalCampaigns(filterOptions.campaigns);
+  }, [filterOptions.campaigns]);
+
+  // Quick create campaign handler for inline creation in dropdowns
+  const handleQuickCreateCampaign = async (name: string): Promise<string | null> => {
+    const result = await quickCreateCampaign(name);
+    if (result.success && result.id) {
+      const newCampaign = {
+        id: result.id,
+        name,
+        color: result.color || "#6366f1",
+      };
+      setLocalCampaigns((prev) =>
+        [...prev, newCampaign].sort((a, b) => a.name.localeCompare(b.name))
+      );
+      // Also refresh the data to get updated campaign list
+      fetchData();
+      return result.id.toString();
+    }
+    return null;
+  };
 
   // Dialog states
   const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
@@ -366,6 +394,8 @@ export default function StrategyPage() {
         onOpenChange={setIdeaDialogOpen}
         idea={editingIdea}
         filterOptions={filterOptions}
+        localCampaigns={localCampaigns}
+        onCreateCampaign={handleQuickCreateCampaign}
         onSubmit={handleIdeaSubmit}
       />
       <ConfirmDialog
@@ -384,6 +414,8 @@ export default function StrategyPage() {
         onOpenChange={setBriefDialogOpen}
         brief={editingBrief}
         filterOptions={filterOptions}
+        localCampaigns={localCampaigns}
+        onCreateCampaign={handleQuickCreateCampaign}
         onSubmit={handleBriefSubmit}
       />
       <ConfirmDialog

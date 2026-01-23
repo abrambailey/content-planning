@@ -138,6 +138,62 @@ export async function deleteCampaign(
   return { success: true };
 }
 
+// Generate a random color for new campaigns
+function generateCampaignColor(): string {
+  const colors = [
+    "#6366F1", // indigo
+    "#8B5CF6", // violet
+    "#EC4899", // pink
+    "#EF4444", // red
+    "#F97316", // orange
+    "#EAB308", // yellow
+    "#22C55E", // green
+    "#14B8A6", // teal
+    "#06B6D4", // cyan
+    "#3B82F6", // blue
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+/**
+ * Quick create a campaign with just a name (for inline creation in dropdowns)
+ */
+export async function quickCreateCampaign(
+  name: string
+): Promise<{ success: boolean; id?: number; color?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const color = generateCampaignColor();
+
+  const { data, error } = await supabase
+    .from("cp_campaigns")
+    .insert({
+      name,
+      slug,
+      status: "planning",
+      color,
+      created_by: user?.id,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Error creating campaign:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/strategy");
+  return { success: true, id: data.id, color };
+}
+
 // ============================================================================
 // Ideas
 // ============================================================================

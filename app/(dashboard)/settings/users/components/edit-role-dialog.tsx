@@ -110,13 +110,6 @@ export function EditRoleDialog({
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
               type="submit"
               disabled={isSubmitting || role === user.role}
             >

@@ -114,7 +114,7 @@ export function ContentFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{item ? "Edit Details" : "Create Content"}</DialogTitle>
@@ -125,7 +125,8 @@ export function ContentFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="-mx-6 max-h-[60vh] overflow-y-auto px-6">
+            <div className="grid gap-4 py-4">
             {/* Title */}
             <div className="grid gap-2">
               <Label htmlFor="title">Title *</Label>
@@ -269,16 +270,10 @@ export function ContentFormDialog({
                 placeholder="https://app.storyblok.com/..."
               />
             </div>
+            </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
+          <DialogFooter className="-mx-6 -mb-6 rounded-b-lg border-t bg-muted/50 p-4">
             <Button type="submit" disabled={isSubmitting || !formData.title}>
               {isSubmitting ? "Saving..." : item ? "Save changes" : "Create"}
             </Button>

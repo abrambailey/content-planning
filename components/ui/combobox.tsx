@@ -85,20 +85,20 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between font-normal", className)}
+          className={cn("w-full justify-between overflow-hidden font-normal", className)}
         >
           {selectedOption ? (
-            <span className="flex items-center gap-2">
+            <span className="flex min-w-0 items-center gap-2">
               {selectedOption.color && (
                 <div
                   className="h-2 w-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: selectedOption.color }}
                 />
               )}
-              {selectedOption.label}
+              <span className="truncate">{selectedOption.label}</span>
             </span>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground truncate">{placeholder}</span>
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>

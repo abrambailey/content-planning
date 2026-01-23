@@ -107,7 +107,8 @@ export function CampaignFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="-mx-6 max-h-[60vh] overflow-y-auto px-6">
+            <div className="grid gap-4 py-4">
             {/* Name */}
             <div className="grid gap-2">
               <Label htmlFor="name">Name *</Label>
@@ -247,16 +248,10 @@ export function CampaignFormDialog({
                 rows={3}
               />
             </div>
+            </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
+          <DialogFooter className="-mx-6 -mb-6 rounded-b-lg border-t bg-muted/50 p-4">
             <Button type="submit" disabled={isSubmitting || !formData.name}>
               {isSubmitting ? "Saving..." : campaign ? "Save changes" : "Create"}
             </Button>

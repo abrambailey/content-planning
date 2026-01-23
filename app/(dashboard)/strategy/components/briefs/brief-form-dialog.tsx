@@ -20,14 +20,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Combobox } from "@/components/ui/combobox";
 import type { ContentBrief, ContentBriefInput, StrategyFilterOptions } from "../types";
+
+interface CampaignOption {
+  id: number;
+  name: string;
+  color: string;
+}
 
 interface BriefFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   brief: ContentBrief | null;
   filterOptions: StrategyFilterOptions;
+  localCampaigns: CampaignOption[];
+  onCreateCampaign: (name: string) => Promise<string | null>;
   onSubmit: (input: ContentBriefInput) => Promise<void>;
 }
 
@@ -36,6 +44,8 @@ export function BriefFormDialog({
   onOpenChange,
   brief,
   filterOptions,
+  localCampaigns,
+  onCreateCampaign,
   onSubmit,
 }: BriefFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,7 +126,7 @@ export function BriefFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-2xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{brief ? "Edit Brief" : "Create Brief"}</DialogTitle>
@@ -127,7 +137,7 @@ export function BriefFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="-mx-6 max-h-[60vh] overflow-y-auto px-6">
             <div className="grid gap-4 py-4">
               {/* Title */}
               <div className="grid gap-2">
@@ -172,30 +182,25 @@ export function BriefFormDialog({
 
                 <div className="grid gap-2">
                   <Label htmlFor="campaign">Campaign</Label>
-                  <Select
-                    value={formData.campaign_id?.toString() || "none"}
+                  <Combobox
+                    options={localCampaigns.map((campaign) => ({
+                      value: campaign.id.toString(),
+                      label: campaign.name,
+                      color: campaign.color,
+                    }))}
+                    value={formData.campaign_id?.toString() || null}
                     onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        campaign_id: value === "none" ? null : Number(value),
+                        campaign_id: value ? Number(value) : null,
                       })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select campaign" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {filterOptions.campaigns.map((campaign) => (
-                        <SelectItem
-                          key={campaign.id}
-                          value={campaign.id.toString()}
-                        >
-                          {campaign.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onCreate={onCreateCampaign}
+                    placeholder="Select campaign"
+                    searchPlaceholder="Search or create..."
+                    emptyText="No campaigns found."
+                    createText="Create campaign"
+                  />
                 </div>
               </div>
 
@@ -385,16 +390,9 @@ export function BriefFormDialog({
                 />
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
-          <DialogFooter className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
+          <DialogFooter className="-mx-6 -mb-6 rounded-b-lg border-t bg-muted/50 p-4">
             <Button type="submit" disabled={isSubmitting || !formData.title}>
               {isSubmitting ? "Saving..." : brief ? "Save changes" : "Create"}
             </Button>

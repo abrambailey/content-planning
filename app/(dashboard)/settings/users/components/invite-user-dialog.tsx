@@ -98,13 +98,6 @@ export function InviteUserDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
             <Button type="submit" disabled={isSubmitting || !email}>
               {isSubmitting ? "Sending..." : "Send invite"}
             </Button>
