@@ -16,7 +16,7 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: error.message || "Unable to create account" };
   }
 
   // Assign default role (author) to new users
@@ -32,6 +32,12 @@ export async function signup(formData: FormData) {
     }
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  // If there's a session, user is confirmed - redirect to dashboard
+  // Otherwise, email confirmation is required - redirect to login with message
+  if (data.session) {
+    revalidatePath("/", "layout");
+    redirect("/");
+  } else {
+    redirect("/login?message=Check your email to confirm your account");
+  }
 }

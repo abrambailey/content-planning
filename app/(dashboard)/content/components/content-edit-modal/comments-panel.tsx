@@ -1,0 +1,184 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Search, MessageSquare } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Comment, User } from "../types";
+import { getComments } from "../../actions";
+import { CommentMessage } from "../comment-message";
+import { CommentInput } from "../comment-input";
+
+interface CommentsPanelProps {
+  contentItemId: number | null;
+  currentUserId?: string;
+  users: User[];
+  className?: string;
+  highlightCommentId?: number | null;
+}
+
+export function CommentsPanel({
+  contentItemId,
+  currentUserId,
+  users,
+  className,
+  highlightCommentId,
+}: CommentsPanelProps) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Load comments when content item changes
+  useEffect(() => {
+    if (contentItemId) {
+      loadComments();
+    } else {
+      setComments([]);
+    }
+  }, [contentItemId]);
+
+  // Scroll to and highlight comment when highlightCommentId changes
+  useEffect(() => {
+    if (highlightCommentId && comments.length > 0) {
+      setHighlightedId(highlightCommentId);
+      // Scroll to the comment
+      setTimeout(() => {
+        const commentElement = document.getElementById(`comment-${highlightCommentId}`);
+        if (commentElement) {
+          commentElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+      // Remove highlight after 3 seconds
+      const timer = setTimeout(() => setHighlightedId(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightCommentId, comments.length]);
+
+  // Search with debounce
+  useEffect(() => {
+    if (!contentItemId) return;
+
+    const timer = setTimeout(() => {
+      loadComments(search);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search, contentItemId]);
+
+  const loadComments = useCallback(
+    async (searchQuery?: string) => {
+      if (!contentItemId) return;
+
+      setIsLoading(true);
+      const data = await getComments(contentItemId, searchQuery);
+      setComments(data);
+      setIsLoading(false);
+    },
+    [contentItemId]
+  );
+
+  const handleCommentAdded = useCallback((comment: Comment) => {
+    setComments((prev) => [...prev, comment]);
+    // Scroll to bottom
+    setTimeout(() => {
+      const scrollArea = scrollAreaRef.current?.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
+      if (scrollArea) {
+        scrollArea.scrollTop = scrollArea.scrollHeight;
+      }
+    }, 100);
+  }, []);
+
+  const handleCommentDeleted = useCallback((commentId: number) => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  }, []);
+
+  const handleCommentUpdated = useCallback((commentId: number, body: string) => {
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId ? { ...c, body, updated_at: new Date().toISOString() } : c
+      )
+    );
+  }, []);
+
+  if (!contentItemId) {
+    return (
+      <div className={className}>
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm">
+          <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
+          <p>Save the content item to enable comments</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex flex-col min-h-0 overflow-hidden ${className}`}>
+      {/* Header */}
+      <div className="p-3 border-b flex-shrink-0">
+        <div className="flex items-center gap-2 mb-2">
+          <MessageSquare className="h-4 w-4" />
+          <span className="font-medium text-sm">Comments</span>
+          {comments.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              ({comments.length})
+            </span>
+          )}
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search comments..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-8 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Comments List */}
+      <ScrollArea ref={scrollAreaRef} className="flex-1 min-h-0">
+        <div className="px-3 divide-y">
+          {isLoading && comments.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">
+              Loading comments...
+            </div>
+          ) : comments.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground text-sm">
+              {search
+                ? "No comments match your search"
+                : "No comments yet. Start the conversation!"}
+            </div>
+          ) : (
+            comments.map((comment) => (
+              <div
+                key={comment.id}
+                id={`comment-${comment.id}`}
+                className={highlightedId === comment.id ? "bg-yellow-100 dark:bg-yellow-900/30 -mx-3 px-3 transition-colors duration-500" : ""}
+              >
+                <CommentMessage
+                  comment={comment}
+                  currentUserId={currentUserId}
+                  onDelete={handleCommentDeleted}
+                  onUpdate={handleCommentUpdated}
+                />
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Input */}
+      <CommentInput
+        contentItemId={contentItemId}
+        users={users}
+        onCommentAdded={handleCommentAdded}
+      />
+    </div>
+  );
+}

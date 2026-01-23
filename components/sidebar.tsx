@@ -10,19 +10,38 @@ import {
   Settings,
   LogOut,
   Users,
+  Package,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/(auth)/login/actions";
 import type { UserRole } from "@/lib/types";
 
-interface SidebarProps {
+interface UserProfile {
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+interface AppSidebarProps {
   user: User;
   role: UserRole;
+  profile?: UserProfile;
 }
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Products", href: "/products", icon: Package },
   { name: "Content", href: "/content", icon: FileText },
   { name: "Strategy", href: "/strategy", icon: Lightbulb },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -32,59 +51,96 @@ const adminNavigation = [
   { name: "Users", href: "/settings/users", icon: Users },
 ];
 
-export function Sidebar({ user, role }: SidebarProps) {
+export function AppSidebar({ user, role, profile }: AppSidebarProps) {
   const pathname = usePathname();
 
   const allNavigation =
     role === "admin" ? [...navigation, ...adminNavigation] : navigation;
 
+  const displayName = profile?.display_name || user.email?.split("@")[0] || "User";
+  const avatarUrl = profile?.avatar_url;
+  const initials = profile?.display_name
+    ? profile.display_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : user.email?.[0].toUpperCase() || "U";
+
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-card">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <FileText className="h-5 w-5" />
-          <span>Content Planning</span>
-        </Link>
-      </div>
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/">
+                <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <FileText className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Content Planning</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      <nav className="flex-1 space-y-1 p-2">
-        {allNavigation.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.name}
-            </Link>
-          );
-        })}
-      </nav>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
+            {allNavigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={item.name}
+                  >
+                    <Link href={item.href}>
+                      <item.icon />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
 
-      <div className="border-t p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-            {user.email?.[0].toUpperCase()}
-          </div>
-          <div className="flex-1 truncate">
-            <p className="truncate text-sm font-medium">{user.email}</p>
-            <p className="text-xs text-muted-foreground capitalize">{role}</p>
-          </div>
-        </div>
-        <form action={logout}>
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign out
-          </Button>
-        </form>
-      </div>
-    </div>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild tooltip="Profile settings">
+              <Link href="/settings">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{displayName}</span>
+                  <span className="truncate text-xs text-muted-foreground capitalize">
+                    {role}
+                  </span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <form action={logout}>
+              <SidebarMenuButton asChild tooltip="Sign out">
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  className="w-full justify-start"
+                >
+                  <LogOut />
+                  <span>Sign out</span>
+                </Button>
+              </SidebarMenuButton>
+            </form>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 }

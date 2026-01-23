@@ -19,13 +19,17 @@ build: ## Build for production
 	pnpm build
 
 # Database commands
+DB_URL := postgresql://postgres:postgres@127.0.0.1:54354/postgres
+
 db-pull-data: ## Pull data from remote Supabase to local database
 	@echo "Dumping data from remote database..."
 	supabase db dump --data-only -f /tmp/remote_data.sql
 	@echo "Resetting local database and applying migrations..."
 	supabase db reset
-	@echo "Restoring data to local database..."
-	psql postgresql://postgres:postgres@127.0.0.1:54354/postgres -f /tmp/remote_data.sql
+	@echo "Clearing seeded tables that conflict with prod data..."
+	psql $(DB_URL) -c "TRUNCATE cp_workflow_statuses, cp_content_types CASCADE; TRUNCATE storage.buckets CASCADE;"
+	@echo "Restoring data to local database (triggers disabled for circular FKs)..."
+	@echo "SET session_replication_role = 'replica';" | cat - /tmp/remote_data.sql | psql $(DB_URL)
 	@rm /tmp/remote_data.sql
 	@echo "Done! Local database synced with remote data."
 

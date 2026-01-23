@@ -6,6 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ProfileForm } from "./components/profile-form";
+import { getProfile } from "./actions";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -13,11 +15,12 @@ export default async function SettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: userRole } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user?.id)
-    .single();
+  const [profile, userRoleResult] = await Promise.all([
+    getProfile(),
+    supabase.from("user_roles").select("role").eq("user_id", user?.id).single(),
+  ]);
+
+  const userRole = userRoleResult.data;
 
   return (
     <div className="space-y-6">
@@ -31,13 +34,23 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Profile</CardTitle>
-          <CardDescription>Your account information</CardDescription>
+          <CardDescription>
+            Update your profile information and avatar
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {profile && user?.email && (
+            <ProfileForm profile={profile} email={user.email} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+          <CardDescription>Your account details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">Email</label>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
-          </div>
           <div>
             <label className="text-sm font-medium">Role</label>
             <p className="text-sm text-muted-foreground capitalize">
@@ -46,7 +59,9 @@ export default async function SettingsPage() {
           </div>
           <div>
             <label className="text-sm font-medium">User ID</label>
-            <p className="text-sm text-muted-foreground font-mono">{user?.id}</p>
+            <p className="text-sm text-muted-foreground font-mono text-xs">
+              {user?.id}
+            </p>
           </div>
         </CardContent>
       </Card>

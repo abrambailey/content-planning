@@ -123,3 +123,106 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Editor.js styles */
+.codex-editor {
+  @apply text-foreground;
+}
+
+.codex-editor__redactor {
+  padding-bottom: 100px !important;
+}
+
+.ce-block__content,
+.ce-toolbar__content {
+  max-width: 100% !important;
+}
+
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn {
+  @apply bg-muted text-muted-foreground hover:bg-accent;
+}
+
+.ce-block--selected .ce-block__content {
+  @apply bg-accent/50;
+}
+
+.ce-inline-toolbar {
+  @apply bg-popover border-border;
+}
+
+.ce-inline-toolbar__buttons {
+  @apply border-border;
+}
+
+.ce-inline-tool {
+  @apply text-foreground hover:bg-accent;
+}
+
+.ce-inline-tool--active {
+  @apply text-primary;
+}
+
+.ce-conversion-toolbar {
+  @apply bg-popover border-border;
+}
+
+.ce-conversion-tool {
+  @apply hover:bg-accent;
+}
+
+.ce-settings {
+  @apply bg-popover border-border;
+}
+
+.ce-settings__button {
+  @apply text-foreground hover:bg-accent;
+}
+
+.cdx-block {
+  @apply text-foreground;
+}
+
+.ce-header {
+  @apply font-bold;
+}
+
+.ce-paragraph {
+  @apply leading-relaxed;
+}
+
+.cdx-list {
+  @apply pl-6;
+}
+
+.cdx-checklist__item {
+  @apply flex items-start gap-2;
+}
+
+.cdx-checklist__item-checkbox {
+  @apply mt-1;
+}
+
+.cdx-quote {
+  @apply border-l-4 border-muted pl-4 italic;
+}
+
+.cdx-quote__caption {
+  @apply text-sm text-muted-foreground mt-2;
+}
+
+.ce-code__textarea {
+  @apply bg-muted text-foreground font-mono text-sm rounded-md;
+}
+
+.tc-table {
+  @apply border-collapse w-full;
+}
+
+.tc-table__cell {
+  @apply border border-border p-2;
+}
+
+.tc-table__inp {
+  @apply bg-transparent;
+}

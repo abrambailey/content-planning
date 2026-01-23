@@ -1,6 +1,12 @@
 import { LoginForm } from "./login-form";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string }>;
+}) {
+  const { message } = await searchParams;
+
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-8 px-4">
@@ -10,6 +16,11 @@ export default function LoginPage() {
             Sign in to your account to continue
           </p>
         </div>
+        {message && (
+          <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
+            {message}
+          </div>
+        )}
         <LoginForm />
       </div>
     </div>
