@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   Card,
@@ -14,11 +15,15 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
   // Get user role
   const { data: userRole } = await supabase
     .from("user_roles")
     .select("role")
-    .eq("user_id", user!.id)
+    .eq("user_id", user.id)
     .single();
 
   const role = userRole?.role || "author";
@@ -27,7 +32,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {user!.email}</p>
+        <p className="text-muted-foreground">Welcome back, {user.email}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

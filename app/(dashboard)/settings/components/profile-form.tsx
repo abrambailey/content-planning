@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { updateProfile, uploadAvatar, removeAvatar } from "../actions";
+import { updateProfile, uploadAvatar, removeAvatar, changeEmail, changePassword } from "../actions";
 import type { UserProfile } from "../actions";
 
 interface ProfileFormProps {
@@ -17,10 +17,18 @@ interface ProfileFormProps {
 export function ProfileForm({ profile, email }: ProfileFormProps) {
   const [displayName, setDisplayName] = useState(profile.display_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
+  const [newEmail, setNewEmail] = useState(email);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const emailChanged = newEmail !== email;
+  const passwordValid = newPassword.length >= 8 && newPassword === confirmPassword;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -78,6 +86,46 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
     }
 
     setIsUploading(false);
+    setTimeout(() => setMessage(null), 3000);
+  };
+
+  const handleChangeEmail = async () => {
+    if (!emailChanged) return;
+
+    setIsChangingEmail(true);
+    setMessage(null);
+
+    const result = await changeEmail(newEmail);
+
+    if (result.success) {
+      setMessage({
+        type: "success",
+        text: "Confirmation email sent. Please check both your old and new email to confirm the change."
+      });
+    } else {
+      setMessage({ type: "error", text: result.error || "Failed to change email" });
+    }
+
+    setIsChangingEmail(false);
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordValid) return;
+
+    setIsChangingPassword(true);
+    setMessage(null);
+
+    const result = await changePassword(newPassword);
+
+    if (result.success) {
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessage({ type: "success", text: "Password changed successfully" });
+    } else {
+      setMessage({ type: "error", text: result.error || "Failed to change password" });
+    }
+
+    setIsChangingPassword(false);
     setTimeout(() => setMessage(null), 3000);
   };
 
@@ -161,18 +209,81 @@ export function ProfileForm({ profile, email }: ProfileFormProps) {
         </p>
       </div>
 
-      {/* Email (read-only) */}
+      {/* Email */}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          value={email}
-          disabled
-          className="max-w-md bg-muted"
-        />
+        <div className="flex gap-2 max-w-md">
+          <Input
+            id="email"
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="Enter your email"
+          />
+          {emailChanged && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleChangeEmail}
+              disabled={isChangingEmail}
+            >
+              {isChangingEmail ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Change"
+              )}
+            </Button>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
-          Your email cannot be changed.
+          Changing your email requires confirmation via both your old and new email addresses.
         </p>
+      </div>
+
+      {/* Password */}
+      <div className="space-y-2">
+        <Label htmlFor="newPassword">Change Password</Label>
+        <div className="space-y-2 max-w-md">
+          <Input
+            id="newPassword"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="New password"
+          />
+          <Input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm new password"
+          />
+          {newPassword && (
+            <div className="text-xs text-muted-foreground">
+              {newPassword.length < 8 && (
+                <p className="text-destructive">Password must be at least 8 characters</p>
+              )}
+              {newPassword.length >= 8 && confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-destructive">Passwords do not match</p>
+              )}
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleChangePassword}
+            disabled={isChangingPassword || !passwordValid}
+          >
+            {isChangingPassword ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Changing...
+              </>
+            ) : (
+              "Change Password"
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Message */}

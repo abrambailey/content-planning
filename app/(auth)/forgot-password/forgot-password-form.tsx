@@ -21,45 +21,64 @@ import {
   FieldError,
   FieldGroup,
 } from "@/components/ui/field";
-import { login } from "./actions";
+import { forgotPassword } from "./actions";
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-export function LoginForm() {
+export function ForgotPasswordForm() {
   const [serverError, setServerError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
     mode: "onBlur",
   });
 
-  async function onSubmit(data: LoginFormValues) {
+  async function onSubmit(data: ForgotPasswordFormValues) {
     setServerError(null);
-    const formData = new FormData();
-    formData.append("email", data.email);
-    formData.append("password", data.password);
+    setSuccess(false);
 
-    const result = await login(formData);
+    const result = await forgotPassword(data.email);
     if (result?.error) {
       setServerError(result.error);
+    } else {
+      setSuccess(true);
     }
+  }
+
+  if (success) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Check your email</CardTitle>
+          <CardDescription>
+            We&apos;ve sent a password reset link to your email address. Click
+            the link to reset your password.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Link href="/login" className="text-sm text-primary hover:underline">
+            Back to sign in
+          </Link>
+        </CardFooter>
+      </Card>
+    );
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
+        <CardTitle>Reset Password</CardTitle>
         <CardDescription>
-          Enter your email and password to sign in
+          Enter your email address and we&apos;ll send you a link to reset your
+          password.
         </CardDescription>
       </CardHeader>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -91,34 +110,6 @@ export function LoginForm() {
                 </Field>
               )}
             />
-            <Controller
-              name="password"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <div className="flex items-center justify-between">
-                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                    <Link
-                      href="/forgot-password"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    type="password"
-                    autoComplete="current-password"
-                    aria-invalid={fieldState.invalid}
-                    disabled={form.formState.isSubmitting}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
           </FieldGroup>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 pt-6">
@@ -127,14 +118,14 @@ export function LoginForm() {
             className="w-full"
             disabled={form.formState.isSubmitting}
           >
-            {form.formState.isSubmitting ? "Signing in..." : "Sign In"}
+            {form.formState.isSubmitting ? "Sending..." : "Send Reset Link"}
           </Button>
-          <p className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
+          <Link
+            href="/login"
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            Back to sign in
+          </Link>
         </CardFooter>
       </form>
     </Card>

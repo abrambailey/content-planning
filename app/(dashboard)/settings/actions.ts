@@ -135,6 +135,62 @@ export async function uploadAvatar(
   return { success: true, url: publicUrl };
 }
 
+export async function changePassword(
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  if (!newPassword || newPassword.length < 8) {
+    return { success: false, error: "Password must be at least 8 characters" };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+  if (error) {
+    console.error("Error changing password:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function changeEmail(
+  newEmail: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  if (!newEmail || !newEmail.includes("@")) {
+    return { success: false, error: "Please enter a valid email address" };
+  }
+
+  if (newEmail === user.email) {
+    return { success: false, error: "New email is the same as current email" };
+  }
+
+  const { error } = await supabase.auth.updateUser({ email: newEmail });
+
+  if (error) {
+    console.error("Error changing email:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
 export async function removeAvatar(): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
   const {
