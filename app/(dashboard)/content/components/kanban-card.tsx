@@ -158,7 +158,7 @@ export function KanbanCard({
 
         {/* Notes (if present) */}
         {item.notes && (
-          <p className="text-xs text-muted-foreground mt-1.5 ml-6 line-clamp-2 break-words">
+          <p className="text-xs text-muted-foreground mt-1.5 ml-6 line-clamp-2 break-all">
             {item.notes}
           </p>
         )}

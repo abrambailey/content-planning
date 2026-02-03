@@ -16,7 +16,7 @@ export interface BestListContentItem {
 
 export interface BestListProduct {
   id: number;
-  content_item_id: number;
+  content_id: number;
   product_id: number | null;
   position: number;
   label: string | null;
@@ -46,7 +46,7 @@ export async function getBestListContentItems(): Promise<BestListContentItem[]> 
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("cp_content_items")
+    .from("cp_content")
     .select(`
       id,
       title,
@@ -79,7 +79,7 @@ export async function addProductsToBestList(
   const { data: existingProducts } = await supabase
     .from("cp_best_list_products")
     .select("product_id, position")
-    .eq("content_item_id", contentItemId);
+    .eq("content_id", contentItemId);
 
   const existingProductIds = new Set(
     (existingProducts || [])
@@ -104,7 +104,7 @@ export async function addProductsToBestList(
 
   // Insert only new products
   const inserts = newProductIds.map((productId) => ({
-    content_item_id: contentItemId,
+    content_id: contentItemId,
     product_id: productId,
     position: nextPosition++,
   }));
@@ -133,7 +133,7 @@ export async function replaceProductsInBestList(
   const { error: deleteError } = await supabase
     .from("cp_best_list_products")
     .delete()
-    .eq("content_item_id", contentItemId);
+    .eq("content_id", contentItemId);
 
   if (deleteError) {
     console.error("Error clearing best list products:", deleteError);
@@ -142,7 +142,7 @@ export async function replaceProductsInBestList(
 
   // Insert new products with positions
   const inserts = productIds.map((productId, index) => ({
-    content_item_id: contentItemId,
+    content_id: contentItemId,
     product_id: productId,
     position: index,
   }));
@@ -170,7 +170,7 @@ export async function getBestListProducts(
     .from("cp_best_list_products")
     .select(`
       id,
-      content_item_id,
+      content_id,
       product_id,
       position,
       label,
@@ -187,7 +187,7 @@ export async function getBestListProducts(
         )
       )
     `)
-    .eq("content_item_id", contentItemId)
+    .eq("content_id", contentItemId)
     .order("position", { ascending: true });
 
   if (error) {
@@ -198,7 +198,7 @@ export async function getBestListProducts(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data || []).map((item: any) => ({
     id: item.id,
-    content_item_id: item.content_item_id,
+    content_id: item.content_id,
     product_id: item.product_id,
     position: item.position,
     label: item.label,
@@ -318,7 +318,7 @@ export async function addProductToBestListById(
   const { data: existing } = await supabase
     .from("cp_best_list_products")
     .select("position")
-    .eq("content_item_id", contentItemId)
+    .eq("content_id", contentItemId)
     .order("position", { ascending: false })
     .limit(1);
 
@@ -327,7 +327,7 @@ export async function addProductToBestListById(
   const { data, error } = await supabase
     .from("cp_best_list_products")
     .insert({
-      content_item_id: contentItemId,
+      content_id: contentItemId,
       product_id: productId,
       position: nextPosition,
       label: label || null,
@@ -358,7 +358,7 @@ export async function addCustomProductToBestList(
   const { data: existing } = await supabase
     .from("cp_best_list_products")
     .select("position")
-    .eq("content_item_id", contentItemId)
+    .eq("content_id", contentItemId)
     .order("position", { ascending: false })
     .limit(1);
 
@@ -367,7 +367,7 @@ export async function addCustomProductToBestList(
   const { data, error } = await supabase
     .from("cp_best_list_products")
     .insert({
-      content_item_id: contentItemId,
+      content_id: contentItemId,
       custom_product_name: customProductName,
       custom_product_brand: customProductBrand || null,
       position: nextPosition,
